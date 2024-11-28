@@ -23,6 +23,20 @@ const uri = dbPprefix + dbUsername + ":" + dbPwd + dbUrl + dbParams;
 const client = new MongoClient(uri, { serverApi: ServerApiVersion.v1 });
 let db = client.db(dbName);
 
+app.param('collectionName', function(req, res, next, collectionName) {
+    req.collection = db.collection(collectionName);
+    return next();
+});
+
+app.get('/collections/:collectionName', function(req, res, next) {
+    req.collection.find({}).toArray(function(err, results) {
+    if (err) {
+        return next(err);
+    }
+    res.send(results);
+    });
+});
+
 //logger middleware
 app.use(morgan("short"));
 
