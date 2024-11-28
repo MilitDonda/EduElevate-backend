@@ -1,7 +1,10 @@
 var express = require("express");
+var cors = require("cors");
 var morgan = require("morgan");
 var path = require("path");
 var app = express();
+
+app.use(cors());
 
 //logger middleware
 app.use(morgan("short"));
