@@ -47,6 +47,18 @@ app.post('/collections/:collectionName', function(req, res, next) {
     });
 });
 
+app.put('/collections/:collectionName/:id', function(req, res, next) {
+    req.collection.updateOne({_id: new ObjectId(req.params.id)},
+    {$set: req.body},
+    {safe: true, multi: false}, function(err, result) {
+        if (err) {
+            return next(err);
+        } else {
+            res.send((result.matchedCount === 1) ? {msg: "success"} : {msg: "error"});
+        }
+    });
+});
+
 //logger middleware
 app.use(morgan("short"));
 
