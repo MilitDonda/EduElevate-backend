@@ -5,6 +5,7 @@ var path = require("path");
 var app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
+app.use(express.json());
 app.use(cors());
 
 let propertiesReader = require("properties-reader");
@@ -30,6 +31,15 @@ app.param('collectionName', function(req, res, next, collectionName) {
 
 app.get('/collections/:collectionName', function(req, res, next) {
     req.collection.find({}).toArray(function(err, results) {
+    if (err) {
+        return next(err);
+    }
+    res.send(results);
+    });
+});
+
+app.post('/collections/:collectionName', function(req, res, next) {
+    req.collection.insertOne(req.body, function(err, results) {
     if (err) {
         return next(err);
     }
