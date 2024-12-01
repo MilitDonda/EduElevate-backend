@@ -47,8 +47,9 @@ app.post('/collections/:collectionName/confirm', function(req, res, next) {
     });
 });
 
-app.post('/collections/:collectionName/search', function(req, res, next) {
-    let { searchString } = req.body;
+app.get('/collections/:collectionName/search', function(req, res) {
+    let { query } = req.query;
+    query = query || ''; // Default to an empty string
 
     req.collection.aggregate([
         {
@@ -60,20 +61,22 @@ app.post('/collections/:collectionName/search', function(req, res, next) {
         {
             $match: {
                 $or: [
-                    { subject: { $regex: searchString, $options: "i" } },
-                    { location: { $regex: searchString, $options: "i" } },
-                    { priceAsString: { $regex: searchString, $options: "i" } },
-                    { availabilityAsString: { $regex: searchString, $options: "i" } }
+                    { subject: { $regex: query, $options: "i" } },
+                    { location: { $regex: query, $options: "i" } },
+                    { priceAsString: { $regex: query, $options: "i" } },
+                    { availabilityAsString: { $regex: query, $options: "i" } }
                 ]
             }
         }
     ]).toArray(function(err, results) {
         if (err) {
-            return next(err);
+            console.error("Error in search:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
         }
-        res.send(results);
+        res.json(results);
     });
 });
+
 
 app.put('/collections/:collectionName/update', function(req, res, next) {
     let productIds = req.body.cart;
