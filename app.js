@@ -29,7 +29,7 @@ app.param('collectionName', function(req, res, next, collectionName) {
     return next();
 });
 
-app.get('/collections/:collectionName', function(req, res, next) {
+app.get('/collections/:collectionName/list', function(req, res, next) {
     req.collection.find({}).toArray(function(err, results) {
     if (err) {
         return next(err);
@@ -38,7 +38,7 @@ app.get('/collections/:collectionName', function(req, res, next) {
     });
 });
 
-app.post('/collections/:collectionName', function(req, res, next) {
+app.post('/collections/:collectionName/confirm', function(req, res, next) {
     req.collection.insertOne(req.body, function(err, results) {
     if (err) {
         return next(err);
@@ -47,16 +47,47 @@ app.post('/collections/:collectionName', function(req, res, next) {
     });
 });
 
-app.put('/collections/:collectionName/:id', function(req, res, next) {
-    req.collection.updateOne({_id: new ObjectId(req.params.id)},
-    {$set: req.body},
-    {safe: true, multi: false}, function(err, result) {
+app.post('/collections/:collectionName/search', function(req, res, next) {
+    let { searchString } = req.body;
+
+    req.collection.aggregate([
+        {
+            $addFields: {
+                priceAsString: { $toString: "$price" },
+                availabilityAsString: { $toString: "$availability" }
+            }
+        },
+        {
+            $match: {
+                $or: [
+                    { subject: { $regex: searchString, $options: "i" } },
+                    { location: { $regex: searchString, $options: "i" } },
+                    { priceAsString: { $regex: searchString, $options: "i" } },
+                    { availabilityAsString: { $regex: searchString, $options: "i" } }
+                ]
+            }
+        }
+    ]).toArray(function(err, results) {
         if (err) {
             return next(err);
-        } else {
-            res.send((result.matchedCount === 1) ? {msg: "success"} : {msg: "error"});
         }
+        res.send(results);
     });
+});
+
+app.put('/collections/:collectionName/update', function(req, res, next) {
+    let productIds = req.body.cart;
+
+    req.collection.updateMany(
+        { id: { $in: productIds } }, // Match all products in the array
+        { $inc: { availability: -1 } }, // Decrement `availability` by 1
+        function(err, result) {
+            if (err) {
+                return next(err);
+            }
+            res.send({ message: "Products updated successfully", result });
+        }
+    );
 });
 
 //logger middleware
